@@ -1,4 +1,4 @@
-class ScrollableChatLog extends CONFIG.ui.chat
+class ScrollableChatLog extends ChatLog
 {
 	_getLogElement()
 	{
@@ -12,6 +12,13 @@ class ScrollableChatLog extends CONFIG.ui.chat
 		// If more than half chat log height above the actual bottom, don't do the scroll.
 		const propOfClientHeightScrolled = (log.scrollHeight - log.clientHeight - log.scrollTop) / log.clientHeight;
 		return propOfClientHeightScrolled <= 0.5;
+	}
+
+	/** @override */
+	static get defaultOptions() {
+		return mergeObject(super.defaultOptions, {
+			originalClass: ChatLog
+		});
 	}
 	
 	/** @override */
