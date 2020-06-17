@@ -1,28 +1,47 @@
-Hooks.once("init", () => {
-	// Override scrollBottom
-	ChatLog.prototype.scrollBottom = function(force = true) {
+class ScrollableChatLog extends CONFIG.ui.chat
+{
+	_getLogElement()
+	{
 		const el = this.element;
 		const log = el.length ? el[0].querySelector("#chat-log") : null;
+		return log;
+	}
+
+	_shouldScrollToBottom(log)
+	{
+		// If more than half chat log height above the actual bottom, don't do the scroll.
+		const propOfClientHeightScrolled = (log.scrollHeight - log.clientHeight - log.scrollTop) / log.clientHeight;
+		return propOfClientHeightScrolled <= 0.5;
+	}
+	
+	/** @override */
+	scrollBottom(force = false)
+	{
+		const log = this._getLogElement();
 		if ( log )
 		{
-			// If more than half chat log height above the actual bottom, don't do the scroll.
-			const propOfClientHeightScrolled = (log.scrollHeight - log.clientHeight - log.scrollTop) / log.clientHeight;
-			if ( force || propOfClientHeightScrolled <= 0.5 ) log.scrollTop = log.scrollHeight;
+			if ( force || this._shouldScrollToBottom(log) ) log.scrollTop = log.scrollHeight;
 		}
 	}
 
-	// We default force to true so that when render functions use it on startup we start at the bottom.
-	// But for individual messages we don't want to do that.
-	// This is exactly the same as postOne except
-	// this.scrollBottom();
-	// has become => this.scrollBottom(false);
-	ChatLog.prototype.postOne = async function(message, notify=false) {
-		if ( !message.visible ) return;
-		if ( !this._lastId ) this._lastId = message.id; // Ensure that new messages don't result in batched scrolling
-		return message.render().then(html => {
-			this.element.find("#chat-log").append(html);
-			this.scrollBottom(false);
-			if ( notify ) this.notify(message);
-		});
+	// Posting messages should force a scroll if we're within range of the bottom, in the case that a new message is so large it is bigger than half the box.
+	/** @override */
+	async postOne(...args) {
+		const log = this._getLogElement();
+		const shouldForceScroll = log ? this._shouldScrollToBottom(log) : false;
+		await super.postOne(...args);
+		this.scrollBottom(shouldForceScroll);
 	}
+
+	// When we first render, we should force a scroll.
+	/** @override */
+	async _render(...args) {
+		if (this.rendered) return; // Never re-render the Chat Log itself, only it's contents
+		await super._render(...args);
+		this.scrollBottom(true);
+	}
+};
+
+Hooks.once("init", () => {
+	CONFIG.ui.chat = ScrollableChatLog;
 });
