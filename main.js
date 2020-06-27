@@ -17,8 +17,7 @@ class ScrollableChatLog extends ChatLog
 	/** @override */
 	static get defaultOptions() {
 		return mergeObject(super.defaultOptions, {
-			originalClass: ChatLog,
-			baseApplication: "ChatLog"
+			originalClass: ChatLog
 		});
 	}
 	
@@ -52,4 +51,12 @@ class ScrollableChatLog extends ChatLog
 
 Hooks.once("init", () => {
 	CONFIG.ui.chat = ScrollableChatLog;
+});
+
+Hooks.on('getScrollableChatLogEntryContext', (html, entryOptions) => {
+	Hooks.call('getChatLogEntryContext', html, entryOptions);
+});
+
+Hooks.on('renderScrollableChatLog', (app, html, data) => {
+	Hooks.call('renderChatLog', app, html, data);
 });
