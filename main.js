@@ -17,7 +17,7 @@ class ScrollableChatLog extends ChatLog
 	/** @override */
 	static get defaultOptions() {
 		return mergeObject(super.defaultOptions, {
-			originalClass: ChatLog
+			baseApplication: ChatLog
 		});
 	}
 	
