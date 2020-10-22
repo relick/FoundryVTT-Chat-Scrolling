@@ -56,7 +56,3 @@ Hooks.once("init", () => {
 Hooks.on('getScrollableChatLogEntryContext', (html, entryOptions) => {
 	Hooks.call('getChatLogEntryContext', html, entryOptions);
 });
-
-Hooks.on('renderScrollableChatLog', (app, html, data) => {
-	Hooks.call('renderChatLog', app, html, data);
-});
