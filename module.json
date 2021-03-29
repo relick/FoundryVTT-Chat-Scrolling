@@ -3,15 +3,14 @@
 	"title": "Chat Scrolling",
 	"description": "Allows you to scroll up and read chat messages without being sent to the bottom whenever a player sends a message.",
 	"author": "relick",
-	"version": "0.0.8",
+	"version": "0.0.9",
 	"minimumCoreVersion": "0.7.5",
-	"compatibleCoreVersion": "0.7.5",
+	"compatibleCoreVersion": "0.7.9",
 
-	"scripts": [
-		"./main.js"
-	],
+	"scripts": [],
+	"esmodules": ["./main.js"],
 
 	"url": "https://github.com/relick/FoundryVTT-Chat-Scrolling",
 	"manifest": "https://raw.githubusercontent.com/relick/FoundryVTT-Chat-Scrolling/master/module.json",
-	"download": "https://github.com/relick/FoundryVTT-Chat-Scrolling/archive/0.0.8.zip"
+	"download": "https://github.com/relick/FoundryVTT-Chat-Scrolling/archive/0.0.9.zip"
 }

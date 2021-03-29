@@ -1,58 +1,55 @@
-class ScrollableChatLog extends ChatLog
+"use strict";
+
+import { libWrapper } from "./modules/libWrapperShim.js";
+
+const getLogElement = (chatLog) =>
 {
-	_getLogElement()
-	{
-		const el = this.element;
-		const log = el.length ? el[0].querySelector("#chat-log") : null;
-		return log;
-	}
-
-	_shouldScrollToBottom(log)
-	{
-		// If more than half chat log height above the actual bottom, don't do the scroll.
-		const propOfClientHeightScrolled = (log.scrollHeight - log.clientHeight - log.scrollTop) / log.clientHeight;
-		return propOfClientHeightScrolled <= 0.5;
-	}
-
-	/** @override */
-	static get defaultOptions() {
-		return mergeObject(super.defaultOptions, {
-			originalClass: ChatLog
-		});
-	}
-	
-	/** @override */
-	scrollBottom(force = false)
-	{
-		const log = this._getLogElement();
-		if ( log )
-		{
-			if ( force || this._shouldScrollToBottom(log) ) log.scrollTop = log.scrollHeight;
-		}
-	}
-
-	// Posting messages should force a scroll if we're within range of the bottom, in the case that a new message is so large it is bigger than half the box.
-	/** @override */
-	async postOne(...args) {
-		const log = this._getLogElement();
-		const shouldForceScroll = log ? this._shouldScrollToBottom(log) : false;
-		await super.postOne(...args);
-		this.scrollBottom(shouldForceScroll);
-	}
-
-	// When we first render, we should force a scroll.
-	/** @override */
-	async _render(...args) {
-		if (this.rendered) return; // Never re-render the Chat Log itself, only it's contents
-		await super._render(...args);
-		this.scrollBottom(true);
-	}
+	const el = chatLog.element;
+	const log = el.length ? el[0].querySelector("#chat-log") : null;
+	return log;
 };
 
-Hooks.once("init", () => {
-	CONFIG.ui.chat = ScrollableChatLog;
-});
+const shouldScrollToBottom = (log) =>
+{
+	// If more than half chat log height above the actual bottom, don't do the scroll.
+	const propOfClientHeightScrolled = (log.scrollHeight - log.clientHeight - log.scrollTop) / log.clientHeight;
+	return propOfClientHeightScrolled <= 0.5;
+};
 
-Hooks.on('getScrollableChatLogEntryContext', (html, entryOptions) => {
-	Hooks.call('getChatLogEntryContext', html, entryOptions);
+Hooks.on("setup", () => {
+	libWrapper.register(
+		"chat-scrolling", 'ChatLog.prototype.scrollBottom',
+		function(force = false) {
+			const log = getLogElement(this);
+			if ( log )
+			{
+				if ( force || shouldScrollToBottom(log) ) log.scrollTop = log.scrollHeight;
+			}
+		},
+		'OVERRIDE'
+	);
+
+	// Posting messages should force a scroll if we're within range of the bottom, in the case that a new message is so large it is bigger than half the box.
+	libWrapper.register(
+		"chat-scrolling", 'ChatLog.prototype.postOne',
+		async function(superpostOne, ...args) {
+			const log = getLogElement(this);
+			const shouldForceScroll = log ? shouldScrollToBottom(log) : false;
+			await superpostOne(...args);
+			this.scrollBottom(shouldForceScroll);
+		},
+		'WRAPPER'
+	);
+
+	// When we first render, we should force a scroll.
+	libWrapper.register(
+		"chat-scrolling", 'ChatLog.prototype._render',
+		async function(super_render, ...args) {
+			const rendered = this.rendered;
+			await super_render(...args);
+			if (rendered) return; // Never re-render the Chat Log itself, only it's contents
+			this.scrollBottom(true);
+		},
+		'WRAPPER'
+	);
 });
