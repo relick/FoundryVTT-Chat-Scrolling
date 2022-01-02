@@ -30,6 +30,7 @@ Hooks.on("setup", () => {
 	);
 
 	// Posting messages should force a scroll if we're within range of the bottom, in the case that a new message is so large it is bigger than half the box.
+	// This case is for the primary foundry rendering
 	libWrapper.register(
 		"chat-scrolling", 'ChatLog.prototype.postOne',
 		async function(superpostOne, ...args) {
@@ -37,6 +38,20 @@ Hooks.on("setup", () => {
 			const shouldForceScroll = log ? shouldScrollToBottom(log) : false;
 			await superpostOne(...args);
 			this.scrollBottom(shouldForceScroll);
+		},
+		'WRAPPER'
+	);
+
+	// Re-rendering messages should force a scroll if we're within range of the bottom, in the case that a new message is so large it is bigger than half the box.
+	// This case is very common for other modules like BetterRolls and midi-qol.
+	libWrapper.register(
+		"chat-scrolling", 'ChatMessage.prototype.render',
+		async function (superrender, ...args) {
+			const log = getLogElement(ui.chat);
+			const shouldForceScroll = log ? shouldScrollToBottom(log) : false;
+			const html = await superrender(...args);
+			setTimeout(() => ui.chat.scrollBottom(shouldForceScroll), 0);
+			return html;
 		},
 		'WRAPPER'
 	);
